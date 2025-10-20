@@ -6,8 +6,6 @@
 
 module top(
     input logic     clk, 
-    input logic     SW, 
-    input logic     BOOT, 
     output logic    _48b, 
     output logic    _45a
 );
@@ -17,8 +15,6 @@ module top(
     logic [7:0] blue_data;
 
     logic [5:0] pixel;
-    logic [4:0] frame;
-    logic [10:0] address;
 
     logic [23:0] shift_reg = 24'd0;
     logic load_sreg;
@@ -26,32 +22,30 @@ module top(
     logic shift;
     logic ws2812b_out;
 
-    assign address = { frame, pixel };
-
-    // Instance sample memory for red channel
+    // Instance initial memory for red channel
     memory #(
-        .INIT_FILE      ("spiral/red.txt")
+        .INIT_FILE      ("initial/red.txt")
     ) u1 (
         .clk            (clk), 
-        .read_address   (address), 
+        .read_address   (pixel), 
         .read_data      (red_data)
     );
 
-    // Instance sample memory for green channel
+    // Instance initial memory for green channel
     memory #(
-        .INIT_FILE      ("spiral/green.txt")
+        .INIT_FILE      ("initial/green.txt")
     ) u2 (
         .clk            (clk), 
-        .read_address   (address), 
+        .read_address   (pixel), 
         .read_data      (green_data)
     );
 
-    // Instance sample memory for blue channel
+    // Instance initial memory for blue channel
     memory #(
-        .INIT_FILE      ("spiral/blue.txt")
+        .INIT_FILE      ("initial/blue.txt")
     ) u3 (
         .clk            (clk), 
-        .read_address   (address), 
+        .read_address   (pixel), 
         .read_data      (blue_data)
     );
 
@@ -70,21 +64,11 @@ module top(
         .load_sreg      (load_sreg), 
         .transmit_pixel (transmit_pixel), 
         .pixel          (pixel), 
-        .frame          (frame)
     );
 
     always_ff @(posedge clk) begin
         if (load_sreg) begin
-            unique case ({ SW, BOOT })
-                2'b00:
-                    shift_reg <= { green_data, 16'd0 };
-                2'b01:
-                    shift_reg <= { 8'd0, red_data, 8'd0 };
-                2'b10:
-                    shift_reg <= { 16'd0, blue_data };
-                2'b11:
-                    shift_reg <= { green_data, red_data, blue_data };
-            endcase
+            shift_reg <= { green_data, red_data, blue_data };
         end
         else if (shift) begin
             shift_reg <= { shift_reg[22:0], 1'b0 };
