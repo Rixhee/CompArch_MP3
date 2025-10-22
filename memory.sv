@@ -3,15 +3,14 @@ module memory #(
     parameter INIT_FILE = ""
 )(
     input logic clk,
-    input logic [5:0] read_address,
     output logic [7:0] matrix [0:7][0:7],
     output logic init_done
 );
 
     logic [7:0] mem [0:63];
-    logic [2: 0] row_counter = 0;  // 3 bits for 0-7
-    logic [2: 0] col_counter = 0;  // 3 bits for 0-7
-    logic [5: 0] val_counter = 0;  // 6 bits for 0-63
+    logic [2:0] row_counter = 0;  // 3 bits for 0-7
+    logic [2:0] col_counter = 0;  // 3 bits for 0-7
+    logic [5:0] val_counter = 0;  // 6 bits for 0-63
     logic [0:0] initializing = 1;
 
     initial if (INIT_FILE) begin
