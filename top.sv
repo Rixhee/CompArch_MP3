@@ -31,7 +31,7 @@ module top #(
     logic [$clog2(PWM_INTERVAL) - 1: 0] pwm_value;
     logic [$clog2(STATE_TRANSITION_INTERVAL) - 1: 0] count;
     
-    // Color state machine - your original 6 states
+    // Color state machine
     localparam GREEN_INC = 3'b000;
     localparam RED_DEC = 3'b001;
     localparam BLUE_INC = 3'b010;
@@ -106,12 +106,11 @@ module top #(
     end
 
     // Combine Game of Life with PWM colors
-    // If pixel is alive (non-zero), use PWM colors; if dead, use black
     assign colored_pixel_value = (pixel_value != 0) ? 
                                  {pwm_green, pwm_red, pwm_blue} :
                                  24'h000000;
 
-    // Color state machine timing - change every 1 second
+    // Color state machine timing 
     always_ff @(posedge clk) begin
         if (count == ($clog2(STATE_TRANSITION_INTERVAL))'(STATE_TRANSITION_INTERVAL - 1)) begin
             count <= 0;

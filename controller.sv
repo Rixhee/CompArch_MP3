@@ -53,9 +53,6 @@ module controller (
     logic [8:0] transmit_counter = 9'd0;
     logic [17:0] idle_counter = 18'd0;
     
-    // Memory read timing control
-    logic mem_read_valid = 1'b0;
-    
     logic transmit_pixel_done;
     logic idle_done;
 
@@ -66,7 +63,7 @@ module controller (
     always_ff @(posedge clk) begin
         case (current_state)
             BUILD_MATRIX: begin
-                // Set memory address and wait for read
+                // Adding one cycle delay for memory read
                 current_state <= BUILD_MATRIX_WAIT;
             end
             
