@@ -42,13 +42,11 @@ module controller_tb;
         end
         
         // Create a glider pattern
-        memory[1*8 + 2] = 8'hFF; // Row 1, Col 2
-        memory[2*8 + 3] = 8'hFF; // Row 2, Col 3
-        memory[3*8 + 1] = 8'hFF; // Row 3, Col 1
-        memory[3*8 + 2] = 8'hFF; // Row 3, Col 2
-        memory[3*8 + 3] = 8'hFF; // Row 3, Col 3
-        
-        $display("Starting Game of Life simulation with glider pattern...");
+        memory[1*8 + 2] = 8'hFF; 
+        memory[2*8 + 3] = 8'hFF; 
+        memory[3*8 + 1] = 8'hFF; 
+        memory[3*8 + 2] = 8'hFF; 
+        memory[3*8 + 3] = 8'hFF; 
     end
     
     // Display matrix when generation completes
@@ -65,14 +63,13 @@ module controller_tb;
         generation++;
         
         if (generation >= 8) begin 
-            $display("Test complete - observed %0d generations.", generation);
             $finish;
         end
     end
     
-    // Run for 2 second (2 second = 2,000,000,000 ns)
+    // Run for 2 seconds
     initial begin
-        #2000000000;  // 2 second
+        #2000000000; 
         $finish;
     end
 
