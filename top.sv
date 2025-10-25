@@ -4,11 +4,7 @@
 `include "fade.sv"
 
 // Combined LED matrix with PWM color cycling
-module top #(
-    parameter PWM_INTERVAL = 1000,
-    parameter ONE_SECOND = 12000000,
-    parameter STATE_TRANSITION_INTERVAL = ONE_SECOND / 6 // Change color every ~0.16s
-)(
+module top #()(
     input logic     clk, 
     output logic    _48b, 
     output logic    _45a
@@ -19,6 +15,7 @@ module top #(
     logic [7:0] green_data;
     logic [7:0] blue_data;
     logic pixel_value;
+    logic [23:0] colored_pixel_value;
     logic [5:0] mem_address;
     logic [23:0] shift_reg = 24'd0;
     logic load_sreg;
@@ -26,105 +23,6 @@ module top #(
     logic shift;
     logic ws2812b_out;
     logic generation_complete;
-
-    // PWM signals
-    logic [$clog2(PWM_INTERVAL) - 1: 0] pwm_value;
-    logic [$clog2(STATE_TRANSITION_INTERVAL) - 1: 0] count;
-    
-    // Color state machine
-    localparam GREEN_INC = 3'b000;
-    localparam RED_DEC = 3'b001;
-    localparam BLUE_INC = 3'b010;
-    localparam GREEN_DEC = 3'b011;
-    localparam RED_INC = 3'b100;
-    localparam BLUE_DEC = 3'b101;
-
-    logic [2:0] current_state = GREEN_INC;
-    logic [2:0] next_state;
-    logic time_to_switch_state;
-    
-    // RGB values derived from PWM intensity and color state
-    logic [7:0] pwm_red, pwm_green, pwm_blue;
-    logic [23:0] colored_pixel_value;
-
-    initial begin
-        count = 0;
-    end
-
-    // Convert PWM value to 8-bit intensity for smooth fading
-    logic [7:0] pwm_intensity;
-    assign pwm_intensity = 8'((pwm_value * 255) / PWM_INTERVAL);
-    
-    // Generate RGB values using your original color wheel states, modulated by PWM intensity
-    always_comb begin
-        next_state = 3'bxxx;
-        pwm_red = 8'h00;
-        pwm_green = 8'h00;
-        pwm_blue = 8'h00;
-        
-        case (current_state)
-            GREEN_INC: begin
-                pwm_red = 8'hFF;                  
-                pwm_green = pwm_intensity;        
-                pwm_blue = 8'h00;                 
-                next_state = RED_DEC;             
-            end
-            RED_DEC: begin
-                pwm_red = pwm_intensity;  
-                pwm_green = 8'hFF;        
-                pwm_blue = 8'h00; 
-                next_state = BLUE_INC;             
-            end
-            BLUE_INC: begin
-                pwm_red = 8'h00;                  
-                pwm_green = 8'hFF;                
-                pwm_blue = pwm_intensity;         
-                next_state = GREEN_DEC;           
-            end
-            GREEN_DEC: begin
-                pwm_red = 8'h00;                  
-                pwm_green = pwm_intensity; 
-                pwm_blue = 8'hFF;          
-                next_state = RED_INC;      
-            end
-            RED_INC: begin
-                pwm_red = pwm_intensity;   
-                pwm_green = 8'h00;         
-                pwm_blue = 8'hFF;          
-                next_state = BLUE_DEC;     
-            end
-            BLUE_DEC: begin
-                pwm_red = 8'hFF;           
-                pwm_green = 8'h00;         
-                pwm_blue = pwm_intensity;  
-                next_state = GREEN_INC;    
-            end
-            default: begin
-                next_state = GREEN_INC;
-            end
-        endcase
-    end
-
-    // Combine Game of Life with PWM colors
-    assign colored_pixel_value = (pixel_value != 0) ? 
-                                 {pwm_green, pwm_red, pwm_blue} :
-                                 24'h000000;
-
-    // Color state machine timing 
-    always_ff @(posedge clk) begin
-        if (count == ($clog2(STATE_TRANSITION_INTERVAL))'(STATE_TRANSITION_INTERVAL - 1)) begin
-            count <= 0;
-            time_to_switch_state <= 1'b1;
-        end
-        else begin
-            count <= count + 1;
-            time_to_switch_state <= 1'b0;
-        end
-    end
-
-    always_ff @(posedge time_to_switch_state) begin
-        current_state <= next_state;
-    end
 
     // Memory instances for initial pattern
     memory #(
@@ -174,11 +72,10 @@ module top #(
     );
 
     // Cycling through the color wheel
-    fade #(
-        .PWM_INTERVAL (PWM_INTERVAL)
-    ) u6 (
-        .clk (clk),
-        .pwm_value (pwm_value)
+    fade u6 (
+        .clk                 (clk),
+        .pixel_value         (pixel_value),
+        .colored_pixel_value (colored_pixel_value)
     );
 
     // Shift register for WS2812B transmission
